@@ -1,2 +1,5 @@
 ---
 # vars file for sap-base-settings
+
+# This locale is required for all systems
+sap_base_settings_locale: en_US.UTF-8

@@ -6,11 +6,11 @@
           dn=$(hostname -d)
           dnsf=$(dig $fn +short)
           dnsr=$(dig -x $dnsf +short)
-          echo "$sn"
-          echo "$fn"
-          echo "$dn"
-          echo "$dnsf"
-          echo "$dnsu"
+          echo "sn:$sn"
+          echo "fn:$fn"
+          echo "dn:$dn"
+          echo "ip:$dnsf"
+          echo "fq:$dnsu"
   register: current_hostname_settings
   changed_when: false
 
@@ -22,15 +22,71 @@
   hostname:
     name: '{{ sap_hostname }}'
 
-- name: ensure domainname is set
-  debug: msg="nothing"
+- name: get all hostaliases of {{ sap_ip }}
+  shell: |
+          awk ' ( $1 == "{{ sap_ip }}" ) {
+                  for (i=2; i<=NF; ++i) { 
+                    if (( $i != "{{ sap_hostname }}" ) && ( $i != "{{ sap_hostname }}.{{ sap_domain }}" )) { printf $i" " } 
+                  } 
+                 }' /etc/hosts
+
+  register: sap_hostname_aliases
+  changed_when: false
+
+- name: print aliases
+  debug:
+          var=sap_hostname_aliases
 
 - name: ensure hostentry is correct
-  debug: msg="nothing"
+  lineinfile:
+          path: /etc/hosts
+          regexp: '^{{ sap_ip }} '
+          line: '{{ sap_ip }} {{ sap_hostname }}.{{ sap_domain }} {{ sap_hostname }} {{ sap_hostname_aliases.stdout }}'
+
+- name: check for double entries of {{ sap_ip }} in /etc/hosts
+  shell: |
+          n=$(grep "^{{ sap_ip }} " /etc/hosts | wc -l)
+          if [ $n -eq 1 ]; then
+             exit 0
+          else
+             echo "Duplicate IP Entry in /etc/hosts"
+             exit 1
+          fi
+  changed_when: false
+
+- name: check for double entries of hostnames in /etc/hosts
+  shell: |
+          n=$(grep -w "{{ item }}" /etc/hosts | wc -l)
+          if [ $n -eq 1 ]; then
+             exit 0
+          else
+             exit 1
+          fi
+  with_items:
+          - '{{ sap_hostname }}.{{ sap_domain }}'
+          - '{{ sap_hostname }}'
+  changed_when: false
 
 - name: ensure locale is set to en_US.UTF-8
   lineinfile:
           path: /etc/locale.conf 
           regexp: '^LANG='
-          line: 'LANG=en_US.UTF-8'
+          line: 'LANG={{ sap_base_settings_locale }}'
+
+- name: IF RED CHECK SSH CONNECTION
+  shell: |
+         if [ $(locale | grep "^LANG=") != "LANG={{ sap_base_settings_locale }}" ]; then
+            echo "WARNING: your ssh/ansible configuration passes your locale setting which may cause trouble with SAP installation script"
+            echo "         as a best practise begin all scripts with \"LANG={{ sap_base_settings_locale }}\""
+            exit 1
+         else
+            echo "Language setting OK"
+            exit 0
+         fi
+  changed_when: false
+  ignore_errors: true
+
+
+
+
 

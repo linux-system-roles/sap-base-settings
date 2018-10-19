@@ -1,2 +1,9 @@
 ---
 # defaults file for sap-base-settings
+
+# SAP Hostname
+sap_hostname: '{{ ansible_hostname }}'
+# SAP Domain
+sap_domain: '{{ ansible_domain }}'
+# SAP IP Address
+sap_ip: '{{ ansible_default_ipv4.address }}'

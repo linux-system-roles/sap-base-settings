@@ -1,23 +1,4 @@
 ---
-- name: get current hostname settings
-  shell: |
-          sn=$(hostname -s)
-          fn=$(hostname -f)
-          dn=$(hostname -d)
-          dnsf=$(dig $fn +short)
-          dnsr=$(dig -x $dnsf +short)
-          echo "sn:$sn"
-          echo "fn:$fn"
-          echo "dn:$dn"
-          echo "ip:$dnsf"
-          echo "fq:$dnsu"
-  register: current_hostname_settings
-  changed_when: false
-
-- name: check variable  current_hostname_settings
-  debug:
-          var: current_hostname_settings
-
 - name: ensure short system hostname is set
   hostname:
     name: '{{ sap_hostname }}'
@@ -67,12 +48,40 @@
           - '{{ sap_hostname }}'
   changed_when: false
 
+- name: check variable  current_hostname_settings
+  debug:
+          var: current_hostname_settings
+
+- name: check hostname settings
+  shell: test "$(hostname -s)" = "$(hostname)" -a "$(hostname -f)" = "$(hostname).$(hostname -d)"
+  changed_when: false
+
+### DNS is not that necessary and as such the errors are ignored
+### for production it is strongly recommended to have proper DNS setup
+
+- name: check dns forward settings
+  shell: test "$(dig {{ sap_hostname }}.{{ sap_domain }} +short)" = "{{ sap_ip }}"
+  changed_when: false
+  ignore_errors: true
+
+- name: check resolv.conf settings
+  shell: test "$(dig {{ sap_hostname }} +short)" = "{{ sap_ip }}"
+  changed_when: false
+  ignore_errors: true
+
+- name: check dns reverse settings
+  shell: test "$(dig -x {{ sap_ip }} +short)" = "{{ sap_hostname }}.{{ sap_domain }}."
+  changed_when: false
+  ignore_errors: true
+
 - name: ensure locale is set to en_US.UTF-8
   lineinfile:
           path: /etc/locale.conf 
           regexp: '^LANG='
           line: 'LANG={{ sap_base_settings_locale }}'
 
+### if the following throws an error SSH is configured to pass locale variables
+### this is informational only, because SAP requires en_US system locale
 - name: IF RED CHECK SSH CONNECTION
   shell: |
          if [ $(locale | grep "^LANG=") != "LANG={{ sap_base_settings_locale }}" ]; then
@@ -84,9 +93,3 @@
             exit 0
          fi
   changed_when: false
-  ignore_errors: true
-
-
-
-
-

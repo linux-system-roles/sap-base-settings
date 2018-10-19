@@ -1,0 +1,36 @@
+---
+- name: get current hostname settings
+  shell: |
+          sn=$(hostname -s)
+          fn=$(hostname -f)
+          dn=$(hostname -d)
+          dnsf=$(dig $fn +short)
+          dnsr=$(dig -x $dnsf +short)
+          echo "$sn"
+          echo "$fn"
+          echo "$dn"
+          echo "$dnsf"
+          echo "$dnsu"
+  register: current_hostname_settings
+  changed_when: false
+
+- name: check variable  current_hostname_settings
+  debug:
+          var: current_hostname_settings
+
+- name: ensure short system hostname is set
+  hostname:
+    name: '{{ sap_hostname }}'
+
+- name: ensure domainname is set
+  debug: msg="nothing"
+
+- name: ensure hostentry is correct
+  debug: msg="nothing"
+
+- name: ensure locale is set to en_US.UTF-8
+  lineinfile:
+          path: /etc/locale.conf 
+          regexp: '^LANG='
+          line: 'LANG=en_US.UTF-8'
+

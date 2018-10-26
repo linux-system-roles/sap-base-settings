@@ -1,5 +1,5 @@
 Role Name: sap-base-settings
-=========================== =
+============================
 
 Sets hostname and locale according to SAP Note 2369910
 

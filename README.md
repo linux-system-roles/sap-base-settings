@@ -19,6 +19,7 @@ Role Variables
 
 - sap_hostname -- defaults to "{{ ansible_hostname }}"
 - sap_domain -- defaults to "{{ ansible_domain }}"
+- sap_ip -- defaults to "{{ ansible_default_ipv4.address }}"
 
 sap_hostname is the short hostname of the SAP system and sap_domain is the DNS domainname. SAP needs both of these parameters to be checked.
 

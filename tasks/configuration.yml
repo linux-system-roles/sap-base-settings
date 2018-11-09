@@ -1,4 +1,15 @@
 ---
+- name: current Values
+  debug:
+     msg: "sap_hostname: {{ sap_hostname }}\nsap_domain:  {{ sap_domain }}\nsap_ip:       {{ sap_ip }}"
+
+- name: Check DNS domain is set
+  assert:
+          that:
+                   not( (sap_domain is undefined) or (sap_domain is none) or (sap_domain | trim == '') )
+          msg: "The current value of sap_domain is: {{ sap_domain }}\nYou need to define 'sap_domain'. SAP will not install properly without proper Domain set."
+
+
 - name: ensure short system hostname is set
   hostname:
     name: '{{ sap_hostname }}'
@@ -47,10 +58,6 @@
           - '{{ sap_hostname }}.{{ sap_domain }}'
           - '{{ sap_hostname }}'
   changed_when: false
-
-- name: check variable  current_hostname_settings
-  debug:
-          var: current_hostname_settings
 
 - name: check hostname settings
   shell: test "$(hostname -s)" = "$(hostname)" -a "$(hostname -f)" = "$(hostname).$(hostname -d)"

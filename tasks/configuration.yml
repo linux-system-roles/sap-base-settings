@@ -94,9 +94,15 @@
          if [ $(locale | grep "^LANG=") != "LANG={{ sap_base_settings_locale }}" ]; then
             echo "WARNING: your ssh/ansible configuration passes your locale setting which may cause trouble with SAP installation script"
             echo "         as a best practise begin all scripts with \"LANG={{ sap_base_settings_locale }}\""
-            exit 1
          else
             echo "Language setting OK"
-            exit 0
          fi
+         . /etc/locale.conf
+          if [ $(locale | grep "^LANG=") != "LANG={{ sap_base_settings_locale }}" ]; then
+             echo "ERROR: Locale setup is not correct"
+             exit
+          else
+             echo "Language setting OK"
+             exit 0
+          fi
   changed_when: false

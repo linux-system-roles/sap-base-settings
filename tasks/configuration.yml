@@ -1,7 +1,7 @@
 ---
 - name: current Values
   debug:
-     msg: "sap_hostname: {{ sap_hostname }}\nsap_domain:  {{ sap_domain }}\nsap_ip:       {{ sap_ip }}"
+     msg: "sap_hostname: {{ sap_hostname }}\nsap_domain:   {{ sap_domain }}\nsap_ip:       {{ sap_ip }}"
 
 - name: Check DNS domain is set
   assert:
@@ -22,7 +22,7 @@
                   } 
                  }' /etc/hosts
 
-  register: sap_hostname_aliases
+  register: sap_base_settings_register_hostname_aliases
   changed_when: false
 
 - name: print aliases
@@ -32,12 +32,12 @@
 - name: ensure hostentry is correct
   lineinfile:
           path: /etc/hosts
-          regexp: '^{{ sap_ip }} '
-          line: '{{ sap_ip }} {{ sap_hostname }}.{{ sap_domain }} {{ sap_hostname }} {{ sap_hostname_aliases.stdout }}'
+          regexp: '^{{ sap_ip }}\s'
+          line: '{{ sap_ip }} {{ sap_hostname }}.{{ sap_domain }} {{ sap_hostname }} {{ sap_base_settings_register_hostname_aliases.stdout }}'
 
 - name: check for double entries of {{ sap_ip }} in /etc/hosts
   shell: |
-          n=$(grep "^{{ sap_ip }} " /etc/hosts | wc -l)
+          n=$(grep "^{{ sap_ip }}\s" /etc/hosts | wc -l)
           if [ $n -eq 1 ]; then
              exit 0
           else

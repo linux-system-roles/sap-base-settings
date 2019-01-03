@@ -9,6 +9,27 @@
                    not( (sap_domain is undefined) or (sap_domain is none) or (sap_domain | trim == '') )
           msg: "The current value of sap_domain is: {{ sap_domain }}\nYou need to define 'sap_domain'. SAP will not install properly without proper Domain set."
 
+# The hostname module fails, if it is run from an initrd_t context
+# See also: https://github.com/ansible/ansible/issues/19814
+# The following applies an appropriate selinux rule if the role is run in initrd_t context
+- name: Get current SE Linux context
+  command: "id -Z"
+  register: sap_base_settings_register_selinux_context
+  changed_when: false
+
+- name: Debug current SE Linux context
+  debug:
+    msg: "the current context is {{ sap_base_settings_register_selinux_context.stdout.split(':')[2] }} "
+
+- name: Adding SE Linux rule so that hostname will work from initrd_t context
+  block:
+    - name: copy SE Linux Rule
+      copy:
+        src=hostnamectl-fix.pp
+        dest=/root/hostnamectl-fix.pp
+    - name: apply SE Linux Rule
+      command: semodule -i /root/hostnamectl-fix.pp
+  when: sap_base_settings_register_selinux_context.stdout.split(':')[2] == 'initrc_t'
 
 - name: ensure short system hostname is set
   hostname:
@@ -71,8 +92,9 @@
   changed_when: false
   ignore_errors: true
 
+### BUG: dig does not use search path in resolv.con on PPCle
 - name: check resolv.conf settings
-  shell: test "$(dig {{ sap_hostname }} +short)" = "{{ sap_ip }}"
+  shell: test "$(dig {{ sap_hostname }} +search +short)" = "{{ sap_ip }}"
   changed_when: false
   ignore_errors: true
 

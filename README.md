@@ -1,3 +1,7 @@
+# **NOTE:** Development and maintenance of this software has stopped.
+For more information, see [DISCONTINUATION_NOTICE.md](DISCONTINUATION_NOTICE.md).
+***
+
 Role Name: sap-base-settings
 ============================
 
